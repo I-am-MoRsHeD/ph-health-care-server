@@ -1,7 +1,6 @@
 model User {
   id                  String     @id @default(uuid())
   email               String     @unique
-  name                String
   password            String
   role                UserRole   @default(PATIENT)
   needPasswordChanged Boolean    @default(true)
@@ -21,7 +20,7 @@ model Patient {
   name          String
   profilePhoto  String?
   contactNumber String
-  address       String
+  address       String?
   isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -52,7 +51,7 @@ model Doctor {
   name                String
   profilePhoto        String?
   contactNumber       String
-  address             String
+  address             String?
   registrationNumber  String     @unique
   experience          Int        @default(0)
   gender              UserGender
