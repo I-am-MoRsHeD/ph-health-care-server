@@ -87,8 +87,8 @@ const createAdmin = async (payload: CreateAdminInterface) => {
 };
 
 const getAllUsers = async (query: Record<string, any>) => {
-    const options = pick(query, userOptionItems);
-    const filters = pick(query, userFilterableFields);
+    const options = pick(query, userOptionItems); // pagination and sorting
+    const filters = pick(query, userFilterableFields); // filtering and searching
 
     const { page, limit, skip, sortBy, sortOrder } = calculatedPagination(options);
     const { searchTerm, ...filteredData } = filters;

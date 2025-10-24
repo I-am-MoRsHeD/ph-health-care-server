@@ -1,5 +1,5 @@
 import { UserRole } from "@prisma/client";
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
 
 interface IPayloadProps {
     email: string,
@@ -16,6 +16,11 @@ const generateToken = (payload: IPayloadProps, secret: Secret, expiresIn: string
     return token;
 };
 
+const verifyToken = (token: string, secret: Secret) => {
+    return jwt.verify(token, secret) as JwtPayload
+};
+
 export const jwtHelpers = {
-    generateToken
+    generateToken,
+    verifyToken
 };
