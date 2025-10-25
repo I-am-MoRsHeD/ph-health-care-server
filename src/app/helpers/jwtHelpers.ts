@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
 
-interface IPayloadProps {
+export interface IPayloadProps {
     email: string,
     role: UserRole
 };
