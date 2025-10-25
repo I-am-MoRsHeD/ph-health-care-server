@@ -3,6 +3,7 @@ import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import { ScheduleService } from "./schedule.service";
 import { pick } from "../../helpers/pick";
+import { IPayloadProps } from "../../helpers/jwtHelpers";
 
 
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
@@ -18,11 +19,12 @@ const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const getSchedules = catchAsync(async (req: Request, res: Response) => {
+const getSchedules = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
+    const user = req.user;
     const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
     const filters = pick(req.query, ['startDateTime', 'endDateTime']);
 
-    const result = await ScheduleService.getSchedules(options, filters);
+    const result = await ScheduleService.getSchedules(user as IPayloadProps, options, filters);
 
     sendResponse(res, {
         statusCode: 200,
