@@ -6,7 +6,9 @@ import { UserRole } from "@prisma/client";
 const router = Router();
 
 
-router.post('/', 
+router.get('/', DoctorScheduleController.getDoctorSchedules);
+
+router.post('/',
     checkAuth(UserRole.DOCTOR),
     DoctorScheduleController.insertIntoDB);
 
