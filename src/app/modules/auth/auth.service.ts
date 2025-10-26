@@ -3,6 +3,8 @@ import { prisma } from "../../shared/prisma";
 import bcrypt from 'bcryptjs';
 import { jwtHelpers } from "../../helpers/jwtHelpers";
 import config from "../../../config";
+import ApiError from "../../errorHelpers/ApiError";
+import httpStatus from 'http-status';
 
 
 const login = async (payload: { email: string, password: string }) => {
@@ -14,13 +16,13 @@ const login = async (payload: { email: string, password: string }) => {
     });
 
     if (!user) {
-        throw new Error('User not found!');
+        throw new ApiError(httpStatus.NOT_FOUND, 'User not found!');
     };
 
     const comparePassword = await bcrypt.compare(payload.password, user.password);
 
     if (!comparePassword) {
-        throw new Error('Password is incorrect!');
+        throw new ApiError(400, 'Password is incorrect!');
     };
 
     const jwtPayload = {
