@@ -6,6 +6,22 @@ import ApiError from "../../errorHelpers/ApiError";
 import { TDoctorWhereInput } from "./doctor.interface";
 
 
+
+const getDoctor = async (id: string) => {
+    const existingDoctor = await prisma.doctor.findFirstOrThrow({
+        where: {
+            id
+        }
+    });
+
+    if (!existingDoctor) {
+        throw new ApiError(404, "Doctor doesn't exist!");
+    };
+
+    return existingDoctor;
+};
+
+
 const getAllFromDB = async (options: any, filters: any) => {
     const { page, limit, skip, sortBy, sortOrder } = calculatedPagination(options);
     const { searchTerm, specialties, ...filterData } = filters;
@@ -136,7 +152,29 @@ const updateIntoDB = async (id: string, payload: Partial<TDoctorWhereInput>) => 
     return updatedData;
 };
 
+const deleteDoctor = async (id: string) => {
+    const existingDoctor = await prisma.doctor.findFirstOrThrow({
+        where: {
+            id
+        }
+    });
+
+    if (!existingDoctor) {
+        throw new ApiError(404, "Doctor doesn't exist!");
+    };
+
+    const result = await prisma.doctor.delete({
+        where: {
+            id
+        }
+    });
+
+    return result;
+};
+
 export const DoctorService = {
+    getDoctor,
     getAllFromDB,
-    updateIntoDB
+    updateIntoDB,
+    deleteDoctor
 }

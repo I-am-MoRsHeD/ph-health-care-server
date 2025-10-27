@@ -6,6 +6,19 @@ import { DoctorService } from "./doctor.service";
 import { doctorFilterableFields } from "./doctor.constant";
 
 
+const getDoctor = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await DoctorService.getDoctor(id);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Doctor info retrived successfully',
+        data: result
+    });
+});
+
 const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
     const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
     const filters = pick(req.query, doctorFilterableFields);
@@ -21,7 +34,6 @@ const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-
 const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
 
@@ -35,7 +47,22 @@ const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await DoctorService.deleteDoctor(id);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Doctor deleted successfully',
+        data: result
+    });
+});
+
 export const DoctorController = {
+    getDoctor,
     getAllFromDB,
-    updateIntoDB
+    updateIntoDB,
+    deleteDoctor
 }
