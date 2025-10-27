@@ -1,4 +1,4 @@
-import { Doctor, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import calculatedPagination from "../../helpers/paginationHelpers";
 import { doctorSearchableFields } from "./doctor.constant";
 import { prisma } from "../../shared/prisma";
@@ -20,7 +20,6 @@ const getDoctor = async (id: string) => {
 
     return existingDoctor;
 };
-
 
 const getAllFromDB = async (options: any, filters: any) => {
     const { page, limit, skip, sortBy, sortOrder } = calculatedPagination(options);
