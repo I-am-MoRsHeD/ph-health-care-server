@@ -4,7 +4,9 @@ import { doctorSearchableFields } from "./doctor.constant";
 import { prisma } from "../../shared/prisma";
 import ApiError from "../../errorHelpers/ApiError";
 import { TDoctorWhereInput } from "./doctor.interface";
-
+import httpsCode from 'http-status';
+import { openai } from "../../helpers/open-router";
+import { parseAIResponse } from "../../helpers/parseAIResponse";
 
 
 const getDoctor = async (id: string) => {
@@ -98,6 +100,56 @@ const getAllFromDB = async (options: any, filters: any) => {
     }
 };
 
+const getAISuggesstion = async (payload: { symptoms: string }) => {
+    if (!(payload && payload.symptoms)) {
+        throw new ApiError(httpsCode.BAD_REQUEST, "Symptoms is required!")
+    };
+
+    const doctors = await prisma.doctor.findMany({
+        where: { isDeleted: false },
+        include: {
+            doctorSpecialties: {
+                include: {
+                    specialities: true
+                }
+            }
+        }
+    });
+
+    // 3. Build the AI prompt
+    const prompt = `
+You are an AI medical assistant that suggests doctors based on patient symptoms,suggest the top 3 most suitable doctors.
+Each doctor has specialties and years of experience.
+Only suggest doctors who are relevant to the given symptoms.
+
+Symptoms: ${payload.symptoms}
+
+Here is a list of doctors with their specialties and experience:
+${JSON.stringify(doctors, null, 2)}
+
+Return your response in JSON format with full individual doctor data.
+`;
+
+    const completion = await openai.chat.completions.create({
+        model: 'z-ai/glm-4.5-air:free',
+        messages: [
+            {
+                role: "system",
+                content: "You are an AI that recommends doctors based on symptoms.",
+            },
+            {
+                role: 'user',
+                content: prompt,
+            },
+
+        ],
+    });
+
+    const data = completion?.choices?.[0]?.message?.content;
+    const result = await parseAIResponse(data as string);
+    return result;
+};
+
 const updateIntoDB = async (id: string, payload: Partial<TDoctorWhereInput>) => {
     const existingDoctor = await prisma.doctor.findFirstOrThrow({
         where: {
@@ -174,6 +226,7 @@ const deleteDoctor = async (id: string) => {
 export const DoctorService = {
     getDoctor,
     getAllFromDB,
+    getAISuggesstion,
     updateIntoDB,
     deleteDoctor
 }

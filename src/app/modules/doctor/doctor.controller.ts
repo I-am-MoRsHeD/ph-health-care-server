@@ -34,6 +34,17 @@ const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getAISuggesstion = catchAsync(async (req: Request, res: Response) => {
+    const result = await DoctorService.getAISuggesstion(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'AI suggesstions retrived successfully',
+        data: result
+    });
+});
+
 const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
 
@@ -63,6 +74,7 @@ const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
 export const DoctorController = {
     getDoctor,
     getAllFromDB,
+    getAISuggesstion,
     updateIntoDB,
     deleteDoctor
 }
