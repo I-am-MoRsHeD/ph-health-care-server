@@ -25,6 +25,11 @@ const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFun
                 error = err.meta,
                 statusCode = httpStatus.BAD_GATEWAY
         }
+        if (err.code === 'P2025') {
+            message = 'There is nothing found!',
+                error = err.meta,
+                statusCode = httpStatus.NOT_FOUND
+        }
     }
     else if (err instanceof Prisma.PrismaClientValidationError) {
         message = "Validation error",
