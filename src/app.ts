@@ -7,8 +7,14 @@ import globalErrorHandler from './app/middleware/globalErrorHandler';
 import notFound from './app/middleware/notFound';
 import router from './app/routes';
 import cookieParser from 'cookie-parser';
+import { PaymentController } from './app/modules/payment/payment.controller';
 
 const app: Application = express();
+// for stripe payment
+app.post("/api/webhook",
+    express.raw({ type: "application/json" }),
+    PaymentController.handleStripeWebhook);
+
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true

@@ -1,4 +1,5 @@
 import { IPayloadProps } from "../../helpers/jwtHelpers";
+import { stripe } from "../../helpers/stripe";
 import { prisma } from "../../shared/prisma";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -59,15 +60,42 @@ const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
 
         const transactionId = uuidv4();
 
-        await tnx.payment.create({
+        const paymentData = await tnx.payment.create({
             data: {
                 appointmentId: appointemnt.id,
                 amount: existingDoctor?.appointmentFee,
                 transactionId,
             }
-        })
+        });
 
-        return appointemnt;
+
+
+        const session = await stripe.checkout.sessions.create({
+            customer_email: user.email,
+            mode: 'payment',
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'bdt',
+                        product_data: {
+                            name: `Doctor Appointment ${existingDoctor?.name}`,
+                        },
+                        unit_amount: existingDoctor.appointmentFee * 100,
+                    },
+                    quantity: 1,
+                },
+            ],
+            metadata: {
+                appointmentId: appointemnt?.id,
+                paymentId: paymentData?.id
+            },
+            success_url: 'http://localhost:3000/success',
+            cancel_url: 'http://localhost:3000/cancel',
+        });
+
+        return {
+            paymentUrl: session?.url
+        };
     });
 
     return result;
