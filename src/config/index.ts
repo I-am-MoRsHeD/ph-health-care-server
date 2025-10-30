@@ -7,6 +7,7 @@ export default {
     node_env: process.env.NODE_ENV,
     port: process.env.PORT,
     database_url: process.env.DATABASE_URL,
+    frontend_url: process.env.FRONTEND_URL,
     bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
     cloudinary: {
         cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

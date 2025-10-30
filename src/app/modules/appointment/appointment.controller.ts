@@ -17,7 +17,23 @@ const getMyAppointments = catchAsync(async (req: Request & { user?: IPayloadProp
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Doctors retrieved successfully',
+        message: 'Appointments retrived successfully',
+        meta: result.meta,
+        data: result.data
+    });
+});
+
+
+const getAppointmentsFromDB = catchAsync(async (req: Request, res: Response) => {
+    const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
+    const filters = pick(req.query, ["status", "paymentStatus", "searchTerm"]);
+
+    const result = await AppointmentService.getAppointmentsFromDB(options, filters);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'All appointments retrieved successfully',
         meta: result.meta,
         data: result.data
     });
@@ -37,7 +53,24 @@ const createAppointment = catchAsync(async (req: Request & { user?: IPayloadProp
 });
 
 
+const updateAppointmentStatus = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const user = req.user;
+
+    const result = await AppointmentService.updateAppointmentStatus(id, status, user as IPayloadProps);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Appointment updated successfully',
+        data: result
+    });
+});
+
 export const AppointmentController = {
     createAppointment,
-    getMyAppointments
+    getMyAppointments,
+    getAppointmentsFromDB,
+    updateAppointmentStatus
 }

@@ -1,9 +1,13 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { AppointemntStatus, Prisma, UserRole } from "@prisma/client";
 import { IPayloadProps } from "../../helpers/jwtHelpers";
 import calculatedPagination from "../../helpers/paginationHelpers";
 import { stripe } from "../../helpers/stripe";
 import { prisma } from "../../shared/prisma";
 import { v4 as uuidv4 } from 'uuid';
+import config from "../../../config";
+import { appointemntSearchableFields } from "./appointment.constant";
+import ApiError from "../../errorHelpers/ApiError";
+import httpStatus from 'http-status';
 
 interface IPayload {
     doctorId: string;
@@ -69,6 +73,77 @@ const getMyAppointments = async (user: IPayloadProps, options: any, filters: any
         data: result
     }
 };
+
+const getAppointmentsFromDB = async (options: any, filters: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatedPagination(options);
+    const { searchTerm, ...filterData } = filters;
+
+    const andConditions: Prisma.AppointemntWhereInput[] = [];
+
+
+    if (searchTerm) {
+        andConditions.push({
+            OR: appointemntSearchableFields.map((field) => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: 'insensitive'
+                }
+            }))
+        })
+    };
+
+    if (Object.keys(filterData).length > 0) {
+        const filterConditions = Object.keys(filterData).map((key) => ({
+            [key]: {
+                equals: (filterData)[key]
+            }
+        }));
+
+        andConditions.push(...filterConditions);
+    };
+
+    const result = await prisma.appointemnt.findMany({
+        where: {
+            AND: andConditions
+        },
+        skip,
+        take: limit,
+        orderBy: {
+            [sortBy]: sortOrder
+        },
+        include: {
+            doctor: {
+                select: {
+                    email: true,
+                    name: true,
+                    registrationNumber: true
+                }
+            },
+            patient: {
+                select: {
+                    email: true,
+                    name: true
+                }
+            }
+        }
+    });
+
+    const total = await prisma.appointemnt.count({
+        where: {
+            AND: andConditions
+        }
+    })
+
+    return {
+        meta: {
+            total,
+            page,
+            limit,
+        },
+        data: result
+    }
+
+}
 
 const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
     const existingPatient = await prisma.patient.findUniqueOrThrow({
@@ -151,8 +226,8 @@ const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
                 appointmentId: appointemnt?.id,
                 paymentId: paymentData?.id
             },
-            success_url: 'http://localhost:3000/success',
-            cancel_url: 'http://localhost:3000/cancel',
+            success_url: `${config.frontend_url}/success`,
+            cancel_url: `${config.frontend_url}/cancel`
         });
 
         return {
@@ -164,8 +239,37 @@ const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
 
 };
 
+const updateAppointmentStatus = async (appointmentId: string, status: AppointemntStatus, user: IPayloadProps) => {
+    const appointemntData = await prisma.appointemnt.findUniqueOrThrow({
+        where: {
+            id: appointmentId
+        },
+        include: {
+            doctor: true
+        }
+    });
+
+    if (user.role === UserRole.DOCTOR) {
+        if (!(user.email === appointemntData.doctor.email)) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "This is not your appointment");
+        };
+    };
+
+    const result = await prisma.appointemnt.update({
+        where: {
+            id: appointmentId
+        },
+        data: {
+            status
+        }
+    });
+
+    return result;
+};
 
 export const AppointmentService = {
     createAppointment,
-    getMyAppointments
+    getMyAppointments,
+    getAppointmentsFromDB,
+    updateAppointmentStatus
 };
