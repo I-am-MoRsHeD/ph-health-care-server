@@ -145,6 +145,115 @@ const getAppointmentsFromDB = async (options: any, filters: any) => {
 
 }
 
+// const getAppointmentsFromDB = async (options: any, filters: any) => {
+//   const { page, limit, skip, sortBy = 'createdAt', sortOrder = 'desc' } = calculatedPagination(options);
+//   const { searchTerm, ...filterData } = filters;
+
+//   const andConditions: Prisma.AppointemntWhereInput[] = [];
+
+//   if (searchTerm && searchTerm.trim() !== '') {
+//     const term = searchTerm.trim();
+
+//     const orForSearch: Prisma.AppointemntWhereInput[] = [
+//       // appointment scalar fields (add any appointment scalar fields you want searched)
+//       { id: { contains: term, mode: 'insensitive' } },
+//       // If you have other appointment scalar fields to search, add them here
+//       // e.g. { videoCallingId: { contains: term, mode: 'insensitive' } },
+
+//       // related doctor name
+//       {
+//         doctor: {
+//           is: {
+//             name: { contains: term, mode: 'insensitive' }
+//           }
+//         }
+//       },
+//       // related patient name
+//       {
+//         patient: {
+//           is: {
+//             name: { contains: term, mode: 'insensitive' }
+//           }
+//         }
+//       },
+//       // You can also search related emails if you want:
+//       {
+//         doctor: {
+//           is: {
+//             email: { contains: term, mode: 'insensitive' }
+//           }
+//         }
+//       },
+//       {
+//         patient: {
+//           is: {
+//             email: { contains: term, mode: 'insensitive' }
+//           }
+//         }
+//       }
+//     ];
+
+//     andConditions.push({ OR: orForSearch });
+//   }
+
+//   // 2) Exact-match filters (from filterData)
+//   if (Object.keys(filterData).length > 0) {
+//     const filterConditions = Object.keys(filterData).map((key) => {
+//       // If filterData contains nested filters for relations you can extend this section.
+//       return {
+//         [key]: {
+//           equals: (filterData as any)[key]
+//         }
+//       } as Prisma.AppointemntWhereInput;
+//     });
+
+//     andConditions.push(...filterConditions);
+//   }
+
+//   // If there are no conditions, leave where undefined (so findMany returns everything with pagination)
+//   const whereClause = andConditions.length > 0 ? { AND: andConditions } : {};
+
+//   // 3) Query DB
+//   const result = await prisma.appointemnt.findMany({
+//     where: whereClause,
+//     skip,
+//     take: limit,
+//     orderBy: {
+//       [sortBy]: sortOrder
+//     },
+//     include: {
+//       doctor: {
+//         select: {
+//           email: true,
+//           name: true,
+//           registrationNumber: true
+//         }
+//       },
+//       patient: {
+//         select: {
+//           email: true,
+//           name: true
+//         }
+//       },
+//       // include other relations if needed:
+//       // schedule: true, payment: true, prescription: true, Review: true
+//     }
+//   });
+
+//   const total = await prisma.appointemnt.count({
+//     where: whereClause
+//   });
+
+//   return {
+//     meta: {
+//       total,
+//       page,
+//       limit
+//     },
+//     data: result
+//   };
+// };
+
 const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
     const existingPatient = await prisma.patient.findUniqueOrThrow({
         where: {

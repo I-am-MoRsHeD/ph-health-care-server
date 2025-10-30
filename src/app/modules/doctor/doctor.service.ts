@@ -25,7 +25,8 @@ const getDoctor = async (id: string) => {
                 include: {
                     schedule: true
                 }
-            }
+            },
+            reviews: true
         }
     });
 
@@ -92,6 +93,12 @@ const getAllFromDB = async (options: any, filters: any) => {
             doctorSpecialties: {
                 include: {
                     specialities: true
+                }
+            },
+            reviews: {
+                select: {
+                    rating: true,
+                    comment: true
                 }
             }
         }
