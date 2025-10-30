@@ -1,4 +1,6 @@
+import { Prisma, UserRole } from "@prisma/client";
 import { IPayloadProps } from "../../helpers/jwtHelpers";
+import calculatedPagination from "../../helpers/paginationHelpers";
 import { stripe } from "../../helpers/stripe";
 import { prisma } from "../../shared/prisma";
 import { v4 as uuidv4 } from 'uuid';
@@ -6,6 +8,66 @@ import { v4 as uuidv4 } from 'uuid';
 interface IPayload {
     doctorId: string;
     scheduleId: string;
+};
+
+const getMyAppointments = async (user: IPayloadProps, options: any, filters: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatedPagination(options);
+    const { ...filterData } = filters;
+
+    const andConditions: Prisma.AppointemntWhereInput[] = [];
+
+    if (user.role === UserRole.PATIENT) {
+        andConditions.push({
+            patient: {
+                email: user.email
+            }
+        })
+    }
+    else if (user.role === UserRole.DOCTOR) {
+        andConditions.push({
+            doctor: {
+                email: user.email
+            }
+        })
+    };
+
+    if (Object.keys(filterData).length > 0) {
+        const filterConditions = Object.keys(filterData).map((key) => ({
+            [key]: {
+                equals: (filterData)[key]
+            }
+        }));
+
+        andConditions.push(...filterConditions)
+    };
+
+    const result = await prisma.appointemnt.findMany({
+        where: {
+            AND: andConditions
+        },
+        skip,
+        take: limit,
+        orderBy: {
+            [sortBy]: sortOrder
+        },
+        include: user.role === UserRole.DOCTOR ?
+            { patient: true } : { doctor: true }
+    });
+
+    const total = await prisma.appointemnt.count({
+        where: {
+            AND: andConditions
+        }
+    })
+
+    return {
+        meta: {
+            total,
+            page,
+            limit,
+        },
+        data: result
+    }
 };
 
 const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
@@ -104,5 +166,6 @@ const createAppointment = async (user: IPayloadProps, payload: IPayload) => {
 
 
 export const AppointmentService = {
-    createAppointment
+    createAppointment,
+    getMyAppointments
 };
