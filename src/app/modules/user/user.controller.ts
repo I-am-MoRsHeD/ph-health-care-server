@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../shared/catchAsync";
 import { UserService } from "./user.service";
 import sendResponse from "../../shared/sendResponse";
+import { IPayloadProps } from "../../helpers/jwtHelpers";
 
 
 const createPatient = catchAsync(async (req: Request, res: Response) => {
@@ -60,9 +61,38 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getMyProfile = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
+
+    const user = req.user;
+
+    const result = await UserService.getMyProfile(user as IPayloadProps);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "My profile data fetched!",
+        data: result
+    })
+});
+
+const changeProfileStatus = catchAsync(async (req: Request, res: Response) => {
+
+    const { id } = req.params;
+    const result = await UserService.changeProfileStatus(id, req.body)
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Users profile status changed!",
+        data: result
+    })
+});
+
 export const UserController = {
     createPatient,
     createDoctor,
     createAdmin,
-    getAllUsers
+    getAllUsers,
+    getMyProfile,
+    changeProfileStatus
 };

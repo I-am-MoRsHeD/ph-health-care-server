@@ -11,6 +11,12 @@ router.get('/all-users',
     checkAuth(UserRole.ADMIN),
     UserController.getAllUsers);
 
+router.get(
+    '/me',
+    checkAuth(UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT),
+    UserController.getMyProfile
+)
+
 router.post(
     '/create-patient',
     fileUploader.upload.single('file'),
@@ -36,5 +42,11 @@ router.post(
         req.body = UserValidation.createAdminZodSchema.parse(JSON.parse(req.body.data));
         return UserController.createAdmin(req, res, next);
     });
+
+router.patch(
+    '/:id/status',
+    checkAuth(UserRole.ADMIN),
+    UserController.changeProfileStatus
+);
 
 export const userRoutes = router;
