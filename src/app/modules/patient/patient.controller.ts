@@ -4,6 +4,7 @@ import sendResponse from "../../shared/sendResponse";
 import { pick } from "../../helpers/pick";
 import { PatientService } from "./patient.service";
 import { patientFilterableFields } from "./patient.constant";
+import { IPayloadProps } from "../../helpers/jwtHelpers";
 
 const getPatient = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -33,10 +34,11 @@ const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
+// Patient Health data, Medical report, Patient Data --> update
+const updateIntoDB = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
+    const user = req.user;
 
-    const result = await PatientService.updateIntoDB(id, req.body);
+    const result = await PatientService.updateIntoDB(user as IPayloadProps, req.body);
 
     sendResponse(res, {
         statusCode: 200,

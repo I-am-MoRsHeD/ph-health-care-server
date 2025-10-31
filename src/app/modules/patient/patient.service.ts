@@ -1,8 +1,9 @@
-import { Patient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import calculatedPagination from "../../helpers/paginationHelpers";
 import { prisma } from "../../shared/prisma";
 import ApiError from "../../errorHelpers/ApiError";
 import { patientSearchableFields } from "./patient.constant";
+import { IPayloadProps } from "../../helpers/jwtHelpers";
 
 
 const getPatient = async (id: string) => {
@@ -75,10 +76,13 @@ const getAllFromDB = async (options: any, filters: any) => {
     }
 };
 
-const updateIntoDB = async (id: string, payload: Partial<Patient>) => {
-    const existingPatient = await prisma.patient.findFirstOrThrow({
+const updateIntoDB = async (user: IPayloadProps, payload: any) => {
+    const { patientHealthData, medicalReport, ...patientData } = payload;
+
+    const existingPatient = await prisma.patient.findUniqueOrThrow({
         where: {
-            id
+            email: user.email,
+            isDeleted: false
         }
     });
 
@@ -86,15 +90,53 @@ const updateIntoDB = async (id: string, payload: Partial<Patient>) => {
         throw new ApiError(404, "Patient doesn't exist!");
     };
 
-    const updatedData = await prisma.patient.update({
-        where: {
-            id
-        },
-        data: payload,
+    return await prisma.$transaction(async (tnx) => {
 
-    });
+        await tnx.patient.update({
+            where: {
+                id: existingPatient.id,
+            },
+            data: patientData,
+        });
 
-    return updatedData;
+        if (patientHealthData) {
+            await tnx.patientHealthData.upsert({
+                where: {
+                    patientId: existingPatient.id,
+                },
+                update: patientHealthData,
+                create: {
+                    patientId: existingPatient.id,
+                    ...patientHealthData
+                }
+            })
+        };
+
+        if (medicalReport) {
+            await tnx.medicalReport.create({
+                data: {
+                    patientId: existingPatient.id,
+                    ...medicalReport
+                }
+            })
+
+        };
+
+        const result = await tnx.patient.findUnique({
+            where: {
+                id: existingPatient.id,
+            },
+            include: {
+                patientHealthData: true,
+                medicalReports: true
+            }
+        });
+
+        return result;
+    })
+
+
+    return {};
 };
 
 const deletePatient = async (id: string) => {
