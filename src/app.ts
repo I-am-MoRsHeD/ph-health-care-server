@@ -1,13 +1,13 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import config from './config';
-import { uptime } from 'process';
-import { timeStamp } from 'console';
 import globalErrorHandler from './app/middleware/globalErrorHandler';
 import notFound from './app/middleware/notFound';
 import router from './app/routes';
 import cookieParser from 'cookie-parser';
 import { PaymentController } from './app/modules/payment/payment.controller';
+import cron from 'node-cron';
+import { AppointmentService } from './app/modules/appointment/appointment.service';
 
 const app: Application = express();
 // for stripe payment
@@ -24,6 +24,15 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+
+cron.schedule('* * * * *', () => {
+    try {
+        console.log("Node Cron called at", new Date());
+        AppointmentService.cancelUnpaidAppointments();
+    } catch (error) {
+        console.error(error);
+    }
+});
 
 app.use('/api', router)
 
