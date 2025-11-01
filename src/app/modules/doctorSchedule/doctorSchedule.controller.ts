@@ -19,20 +19,52 @@ const insertIntoDB = catchAsync(async (req: Request & { user?: IPayloadProps }, 
     });
 });
 
-const getDoctorSchedules = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
-    const user = req.user;
+const getMySchedule = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
+    const filters = pick(req.query, ['startDate', 'endDate', 'isBooked']);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
 
-    const result = await DoctorScheduleService.getDoctorSchedules(user as IPayloadProps);
+    const user = req.user;
+    const result = await DoctorScheduleService.getMySchedule(filters, options, user as IPayloadProps);
 
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Schedule retrieved successfully',
+        message: "My Schedule fetched successfully!",
         data: result
     });
 });
 
+const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
+    const filters = pick(req.query, ['searchTerm', 'isBooked', 'doctorId']);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+    const result = await DoctorScheduleService.getAllFromDB(filters, options);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Doctor Schedule retrieval successfully',
+        meta: result.meta,
+        data: result.data,
+    });
+});
+
+const deleteFromDB = catchAsync(async (req: Request & { user?: IPayloadProps }, res: Response) => {
+
+    const user = req.user;
+    const { id } = req.params;
+    const result = await DoctorScheduleService.deleteFromDB(user as IPayloadProps, id);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "My Schedule deleted successfully!",
+        data: result
+    });
+});
+
+
 export const DoctorScheduleController = {
     insertIntoDB,
-    getDoctorSchedules
+    getMySchedule,
+    getAllFromDB,
+    deleteFromDB
 };
